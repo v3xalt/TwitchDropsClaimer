@@ -474,6 +474,19 @@ async def verify_telegram(request: TelegramVerifyRequest):
     except Exception as e:
         return {"success": False, "message": f"Ошибка соединения: {str(e)}"}
 
+@app.post("/api/settings/test-drop-telegram")
+async def test_drop_telegram():
+    """Тестовая отправка карточки награды в Telegram"""
+    if not twitch_client:
+        raise HTTPException(status_code=503, detail="Twitch client not initialized")
+    if not twitch_client.telegram.enabled:
+        return {"success": False, "message": "Сначала включите Telegram и укажите токен с Chat ID"}
+
+    success = await twitch_client.telegram.send_test_drop()
+    if success:
+        return {"success": True, "message": "Тестовая карточка дропа успешно отправлена!"}
+    else:
+        return {"success": False, "message": "Не удалось отправить карточку (проверьте консоль)"}
 
 if __name__ == "__main__":
     # For standalone testing

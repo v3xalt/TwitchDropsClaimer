@@ -213,13 +213,12 @@ class Twitch:
         self.gui.print(message, collapse_key=collapse_key)
 
     def print(self, message: str, *args: Any, **kwargs: Any) -> None:
-        """Print a message in the GUI and forward important events to Telegram."""
+        """Print a message in the GUI and forward critical events to Telegram."""
         self.gui.print(message, *args, **kwargs)
         if hasattr(self, "telegram") and self.telegram.enabled:
             msg_lower = str(message).lower()
-            if "claimed drop" in msg_lower or "drop получено" in msg_lower:
-                asyncio.create_task(self.telegram.send_message(f"🎁 <b>Twitch Drops Miner</b>\n{message}"))
-            elif "captcha" in msg_lower:
+            # Отправляем предупреждения об ошибках и капче
+            if "captcha" in msg_lower or "капча" in msg_lower:
                 asyncio.create_task(self.telegram.send_message(f"⚠️ <b>Внимание!</b>\n{message}"))
     
     def _remove_channel_topics(self, channels: abc.Iterable[Channel]) -> None:

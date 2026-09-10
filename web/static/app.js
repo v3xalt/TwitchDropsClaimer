@@ -2042,6 +2042,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('telegram-token')?.addEventListener('change', saveSettings);
     document.getElementById('telegram-chat-id')?.addEventListener('change', saveSettings);
     document.getElementById('verify-telegram-btn')?.addEventListener('click', window.verifyTelegram);
+    document.getElementById('test-drop-telegram-btn')?.addEventListener('click', window.testDropTelegram);
 
     // Tab switching
     document.querySelectorAll('.tab-button').forEach(button => {
@@ -2319,6 +2320,32 @@ window.verifyTelegram = async function() {
             resultDiv.className = 'verify-result success';
             resultDiv.textContent = `✓ ${data.message}`;
             saveSettings();
+        } else {
+            resultDiv.className = 'verify-result error';
+            resultDiv.textContent = `✗ ${data.message}`;
+        }
+    } catch (error) {
+        resultDiv.className = 'verify-result error';
+        resultDiv.textContent = `Ошибка: ${error.message}`;
+    }
+};
+
+window.testDropTelegram = async function() {
+    const resultDiv = document.getElementById('telegram-verify-result');
+    if (!resultDiv) return;
+
+    resultDiv.style.display = 'block';
+    resultDiv.className = 'verify-result loading';
+    resultDiv.textContent = 'Отправка тестовой карточки дропа...';
+
+    try {
+        const response = await fetch('/api/settings/test-drop-telegram', {
+            method: 'POST'
+        });
+        const data = await response.json();
+        if (data.success) {
+            resultDiv.className = 'verify-result success';
+            resultDiv.textContent = `✓ ${data.message}`;
         } else {
             resultDiv.className = 'verify-result error';
             resultDiv.textContent = `✗ ${data.message}`;

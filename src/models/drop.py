@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import re
+import asyncio
 from datetime import datetime, timedelta, timezone
 from typing import TYPE_CHECKING
 
@@ -174,8 +175,8 @@ class BaseDrop:
 
     async def claim(self) -> bool:
         result = await self._claim()
-        if result and not self.is_claimed:
-            self.is_claimed = True
+        if result:
+            self.is_claimed = result
             claim_text = (
                 f"{self.campaign.game.name}\n"
                 f"{self.rewards_text()} "
@@ -186,8 +187,10 @@ class BaseDrop:
             self._twitch.print(
                 _.t["status"]["claimed_drop"].format(drop=claim_text.replace("\n", " "))
             )
-            await self._twitch.gui.broadcast_wanted_items_now()
-        elif not result:
+            # === ДОБАВЛЯЕМ ОТПРАВКУ В TELEGRAM ===
+            if hasattr(self._twitch, "telegram") and self._twitch.telegram.enabled:
+                asyncio.create_task(self._twitch.telegram.notify_drop_claimed(self))
+        else:
             logger.error(f"Drop claim has potentially failed! Drop ID: {self.id}")
         return result
 
