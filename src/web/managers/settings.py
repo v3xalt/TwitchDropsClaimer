@@ -77,7 +77,9 @@ class SettingsManager:
 
     def _log_change(self, message: str):
         """Log setting change to both console and system logger."""
-        self._console.print(message)
+        import re
+        sanitized = re.sub(r"('token':\s*')[^']+(\')", r"\1***\2", message)
+        self._console.print(sanitized)
 
     def update_settings(self, settings_data: dict[str, Any]) -> dict[str, Any]:
         """Update settings from user input.
@@ -131,6 +133,9 @@ class SettingsManager:
         )
         should_trigger_update |= self.check_and_update_setting(
             "mining_benefits", settings_data.get("mining_benefits"), True
+        )
+        should_trigger_update |= self.check_and_update_setting(
+            "telegram", settings_data.get("telegram")
         )
 
         self._settings.save()

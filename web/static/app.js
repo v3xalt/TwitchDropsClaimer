@@ -1093,6 +1093,15 @@ function updateSettingsUI(settings) {
     document.getElementById('connection-quality').value = settings.connection_quality || 1;
     document.getElementById('minimum-refresh-interval').value = settings.minimum_refresh_interval_minutes || 30;
 
+    // Telegram settings
+    const tg = settings.telegram || {};
+    const tgEnabled = document.getElementById('telegram-enabled');
+    const tgToken = document.getElementById('telegram-token');
+    const tgChatId = document.getElementById('telegram-chat-id');
+    if (tgEnabled) tgEnabled.checked = tg.enabled || false;
+    if (tgToken) tgToken.value = tg.token || '';
+    if (tgChatId) tgChatId.value = tg.chat_id || '';
+
     const dropBlacklist = document.getElementById('drop-name-blacklist');
     if (dropBlacklist) {
         dropBlacklist.value = Array.isArray(settings.drop_name_blacklist)
@@ -1582,7 +1591,12 @@ async function saveSettings() {
             "BADGE": document.getElementById('mining-benefit-badge')?.checked,
             "EMOTE": document.getElementById('mining-benefit-emote')?.checked,
             "UNKNOWN": document.getElementById('mining-benefit-unknown')?.checked
-        }
+        },
+        telegram: {
+            enabled: document.getElementById('telegram-enabled')?.checked || false,
+            token: document.getElementById('telegram-token')?.value?.trim() || '',
+            chat_id: document.getElementById('telegram-chat-id')?.value?.trim() || ''
+        },
     };
 
     try {
@@ -2024,12 +2038,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // Fetch and display version information
     fetchAndDisplayVersion();
 
+    document.getElementById('telegram-enabled')?.addEventListener('change', saveSettings);
+    document.getElementById('telegram-token')?.addEventListener('change', saveSettings);
+    document.getElementById('telegram-chat-id')?.addEventListener('change', saveSettings);
+    document.getElementById('verify-telegram-btn')?.addEventListener('click', window.verifyTelegram);
+
     // Tab switching
     document.querySelectorAll('.tab-button').forEach(button => {
         button.addEventListener('click', () => {
             switchTab(button.dataset.tab);
         });
-    });
+    }
+);
 
     // Login form
     document.getElementById('login-button').addEventListener('click', submitLogin);
@@ -2270,3 +2290,41 @@ function appendTrustedHelpContent(parent, text) {
         parent.appendChild(document.createTextNode(source.slice(lastIndex)));
     }
 }
+
+window.verifyTelegram = async function() {
+    const token = document.getElementById('telegram-token')?.value?.trim() || '';
+    const chatId = document.getElementById('telegram-chat-id')?.value?.trim() || '';
+    const resultDiv = document.getElementById('telegram-verify-result');
+
+    if (!resultDiv) return;
+
+    resultDiv.style.display = 'block';
+    resultDiv.className = 'verify-result loading';
+    resultDiv.textContent = 'Отправка теста...';
+
+    if (!token || !chatId) {
+        resultDiv.className = 'verify-result error';
+        resultDiv.textContent = 'Укажите Bot Token и Chat ID.';
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/settings/verify-telegram', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: token, chat_id: chatId })
+        });
+        const data = await response.json();
+        if (data.success) {
+            resultDiv.className = 'verify-result success';
+            resultDiv.textContent = `✓ ${data.message}`;
+            saveSettings();
+        } else {
+            resultDiv.className = 'verify-result error';
+            resultDiv.textContent = `✗ ${data.message}`;
+        }
+    } catch (error) {
+        resultDiv.className = 'verify-result error';
+        resultDiv.textContent = `Ошибка: ${error.message}`;
+    }
+};

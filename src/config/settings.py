@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TypedDict
+from typing import Any, TypedDict
 
 from yarl import URL
 
@@ -49,6 +49,11 @@ default_settings = {
         "UNKNOWN": True,
     },
     "proxy": "",
+    "telegram": {
+        "enabled": False,
+        "token": "",
+        "chat_id": "",
+    },
 }
 
 
@@ -64,6 +69,7 @@ class Settings:
     minimum_refresh_interval_minutes: int
     mining_benefits: dict[str, bool]
     proxy: str
+    telegram: dict[str, Any]
 
     def __init__(self):
         self.load()

@@ -31,6 +31,7 @@ from src.services.maintenance import MaintenanceService
 from src.services.message_handlers import MessageHandlerService
 from src.services.stream_selector import StreamSelector
 from src.services.watch_service import WatchService
+from src.services.telegram_service import TelegramService
 from src.utils import (
     AwaitableValue,
 )
@@ -92,6 +93,7 @@ class Twitch:
         self._inventory_service: InventoryService = InventoryService(self)
         self._watch_service: WatchService = WatchService(self)
         self._stream_selector: StreamSelector = StreamSelector()
+        self.telegram: TelegramService = TelegramService(self)
 
     def _ensure_api_clients(self) -> None:
         """Ensure API clients are initialized (called after GUI is set)."""
@@ -210,6 +212,16 @@ class Twitch:
         """Print a message in the GUI."""
         self.gui.print(message, collapse_key=collapse_key)
 
+    def print(self, message: str, *args: Any, **kwargs: Any) -> None:
+        """Print a message in the GUI and forward important events to Telegram."""
+        self.gui.print(message, *args, **kwargs)
+        if hasattr(self, "telegram") and self.telegram.enabled:
+            msg_lower = str(message).lower()
+            if "claimed drop" in msg_lower or "drop получено" in msg_lower:
+                asyncio.create_task(self.telegram.send_message(f"🎁 <b>Twitch Drops Miner</b>\n{message}"))
+            elif "captcha" in msg_lower:
+                asyncio.create_task(self.telegram.send_message(f"⚠️ <b>Внимание!</b>\n{message}"))
+    
     def _remove_channel_topics(self, channels: abc.Iterable[Channel]) -> None:
         """Remove websocket topics for a list of channels."""
         topics_to_remove: list[str] = []

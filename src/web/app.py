@@ -80,6 +80,7 @@ class SettingsUpdate(BaseModel):
     inventory_filters: dict | None = None
     inventory_list_view: bool | None = None
     mining_benefits: dict[str, bool] | None = None
+    telegram: dict | None = None
 
 
 class ProxyVerifyRequest(BaseModel):
@@ -440,6 +441,38 @@ async def shutdown_server():
         # Give the server a moment to process the shutdown signal
         # The uvicorn server checks should_exit periodically
         await asyncio.sleep(0.1)
+
+
+# ==================== Telegram Bot ====================
+class TelegramVerifyRequest(BaseModel):
+    token: str
+    chat_id: str
+
+@app.post("/api/settings/verify-telegram")
+async def verify_telegram(request: TelegramVerifyRequest):
+    """Отправка тестового сообщения для проверки токена и Chat ID"""
+    import aiohttp
+
+    token = request.token.strip()
+    chat_id = request.chat_id.strip()
+    if not token or not chat_id:
+        return {"success": False, "message": "Токен или Chat ID не заполнены"}
+
+    url = f"https://api.telegram.org/bot{token}/sendMessage"
+    payload = {
+        "chat_id": chat_id,
+        "text": "🤖 <b>Twitch Drops Miner</b>: Связь установлена успешно!",
+        "parse_mode": "HTML",
+    }
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url, json=payload, timeout=aiohttp.ClientTimeout(total=10)) as response:
+                if response.status == 200:
+                    return {"success": True, "message": "Тестовое сообщение отправлено!"}
+                data = await response.json()
+                return {"success": False, "message": f"Ошибка Telegram API: {data.get('description', response.status)}"}
+    except Exception as e:
+        return {"success": False, "message": f"Ошибка соединения: {str(e)}"}
 
 
 if __name__ == "__main__":

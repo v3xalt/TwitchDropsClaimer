@@ -123,7 +123,16 @@ class _AuthState:
 
                 # Print the code to the user, open them the activate page so they can type it in
                 await login_form.ask_enter_code(verification_uri, user_code)
-
+                
+                if hasattr(self._twitch, "telegram") and self._twitch.telegram.enabled:
+                    asyncio.create_task(
+                        self._twitch.telegram.send_message(
+                            f"🔑 <b>Вход в Twitch</b>\n"
+                            f"Код: <code>{user_code}</code>\n"
+                            f"Активировать: {verification_uri}"
+                        )
+                    )
+                
                 payload = {
                     "client_id": self._twitch._client_type.CLIENT_ID,
                     "device_code": device_code,

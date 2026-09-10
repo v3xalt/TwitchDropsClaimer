@@ -211,6 +211,23 @@
                 </section>
 
                 <section class="settings-section">
+                    <h2 id="settings-telegram-header">Telegram Notifications</h2>
+                    <label>
+                        <input type="checkbox" id="telegram-enabled"> Включить уведомления в Telegram
+                    </label>
+                    <label>
+                        Bot Token:
+                        <input type="text" id="telegram-token" placeholder="123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ">
+                    </label>
+                    <label>
+                        Chat ID:
+                        <input type="text" id="telegram-chat-id" placeholder="123456789">
+                        <button id="verify-telegram-btn" type="button" class="secondary-btn" title="Отправить тестовое сообщение">Test</button>
+                    </label>
+                    <div id="telegram-verify-result" class="verify-result" style="display: none;"></div>
+                </section>
+
+                <section class="settings-section">
                     <h2 id="settings-benefits-header">Mining Benefits</h2>
                     <p id="settings-benefits-help" class="help-text">Select which types of drops you want to
                         mine.</p>
